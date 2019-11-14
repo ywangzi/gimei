@@ -42,5 +42,4 @@ class Gimei
     @name = Name.new(gender)
     @address = Address.new
   end
-
 end
