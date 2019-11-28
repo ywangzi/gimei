@@ -164,71 +164,121 @@ describe Gimei do
     end
   end
 
-  describe '.unique#address' do
-    it 'ユニークなアドレスが返ること' do
-      Gimei.unique.set_max_retries(10000)
-      unique_addresses = Array.new(10000) do
-        Gimei.unique.address.to_s
-      end
-      assert_equal(unique_addresses.uniq, unique_addresses)
-    end
-
-    it '例外が発生すること' do
-      Gimei.unique.set_max_retries(1)
-      expect{
-        loop do
-          Gimei.unique.address
+  describe '.unique' do
+    describe '#name' do
+      context '名前が枯渇していないとき' do
+        it '一意な名前(フルネームの漢字単位)が返ること' do
+          original_names = Gimei::NAMES
+          Gimei::NAMES = {
+            'first_name' => { 'male' => [['真一', 'しんいち', 'シンイチ']], 'female' => [] },
+            'last_name' => %w[前島 神谷]
+          }
+          [Gimei.unique.name.kanji, Gimei.unique.name.kanji].sort.must_equal ['前島 真一', '神谷 真一']
+          Gimei::NAMES = original_names
         end
-      }.must_raise UniqueGenerator::RetryLimitExceeded
-    end
-  end
-
-  describe '.unique#name' do
-    it 'ユニークな名前が返ること' do
-      Gimei.unique.set_max_retries(10000)
-      unique_names = Array.new(10000) do
-        Gimei.unique.name.to_s
       end
 
-      assert_equal(unique_names.uniq, unique_names)
-    end
-
-    it '例外が発生すること' do
-      Gimei.unique.set_max_retries(1)
-      expect{
-        loop do
-          Gimei.unique.name
+      context '名前が枯渇したとき' do
+        it 'Gimei::RetryLimitExceed例外が発生すること' do
+          original_names = Gimei::NAMES
+          Gimei::NAMES = {
+            'first_name' => { 'male' => [], 'female' => [] },
+            'last_name' => []
+          }
+          assert_raises Gimei::RetryLimitExceed do
+            Gimei.unique.name
+          end
+          Gimei::NAMES = original_names
         end
-      }.must_raise UniqueGenerator::RetryLimitExceeded
-    end
-  end
-
-  describe '.unique#clear' do
-    it '過去の検索結果が消えていること' do
-      Gimei.unique.name
-      Gimei.unique.clear
-      expect(Gimei.unique.instance_variable_get(:@previous_results)).must_be_empty
-    end
-  end
-
-  describe '.unique.clear' do
-    it '過去の検索結果が消えていること' do
-      Gimei.unique.name
-      Gimei.unique.address
-      UniqueGenerator.clear
-      expect(Gimei.unique.instance_variable_get(:@previous_results)).must_be_empty
-    end
-  end
-
-  describe '.unique#exclude' do
-    it '除外した値が取得されないこと' do
-      Gimei.unique.set_max_retries(10000)
-      Gimei.unique.exclude(:address, [], ["大分県釧路郡釧路町平野"])
-      unique_addresses = Array.new(10000) do
-        Gimei.unique.address.to_s
       end
-      expect(unique_addresses).wont_include "大分県釧路郡釧路町平野"
+    end
+
+    describe '#first' do
+      context '名が枯渇していないとき' do
+        it '一意な名(漢字単位)が返ること' do
+          original_names = Gimei::NAMES
+          Gimei::NAMES = {
+            'first_name' => { 'male' => [['真一', 'しんいち', 'シンイチ']], 'female' => [['花子', 'はなこ', 'ハナコ']] },
+            'last_name' => %w[]
+          }
+          [Gimei.unique.first.kanji, Gimei.unique.first.kanji].sort.must_equal %w[真一 花子]
+          Gimei::NAMES = original_names
+        end
+      end
+
+      context '名が枯渇したとき' do
+        it 'Gimei::RetryLimitExceed例外が発生すること' do
+          original_names = Gimei::NAMES
+          Gimei::NAMES = {
+            'first_name' => { 'male' => [], 'female' => [] },
+            'last_name' => []
+          }
+          assert_raises Gimei::RetryLimitExceed do
+            Gimei.unique.first
+          end
+          Gimei::NAMES = original_names
+        end
+      end
+    end
+
+    describe '#last' do
+      context '姓が枯渇していないとき' do
+        it '一意な姓(漢字単位)が返ること' do
+        end
+      end
+
+      context '姓が枯渇したとき' do
+        it 'Gimei::RetryLimitExceed例外が発生すること' do
+        end
+      end
+    end
+
+    describe '#address' do
+      context '住所が枯渇していないとき' do
+        it '一意な住所(漢字単位)が返ること' do
+        end
+      end
+
+      context '住所が枯渇したとき' do
+        it 'Gimei::RetryLimitExceed例外が発生すること' do
+        end
+      end
+    end
+
+    describe '#prefecture' do
+      context '県が枯渇していないとき' do
+        it '一意な県が返ること' do
+        end
+      end
+
+      context '県が枯渇したとき' do
+        it 'Gimei::RetryLimitExceed例外が発生すること' do
+        end
+      end
+    end
+
+    describe '#city' do
+      context '市区町村が枯渇していないとき' do
+        it '一意な市区町村が返ること' do
+        end
+      end
+
+      context '市区町村が枯渇したとき' do
+        it 'Gimei::RetryLimitExceed例外が発生すること' do
+        end
+      end
+    end
+
+    describe '#town' do
+      context 'その他住所が枯渇していないとき' do
+        it '一意なその他住所が返ること' do
+        end
+      end
+
+      context 'その他住所が枯渇したとき' do
+        it 'Gimei::RetryLimitExceed例外が発生すること' do
+        end
+      end
     end
   end
-
 end
